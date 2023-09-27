@@ -20,8 +20,6 @@ def HandleClientThread(conn, addr):
             # Send the content of the requested file to the client
             conn.sendall(outputdata.encode('utf-8'))    
                         
-            # Close the connection socket with this particular client
-            conn.close()
     except IOError:
                 # Send response message for file not found  
                 ErrorMessage = "HTTP/1.1 404 Not found\r\n\r\n"   
