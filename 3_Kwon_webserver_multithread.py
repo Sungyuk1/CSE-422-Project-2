@@ -10,15 +10,45 @@ def HandleClientThread(conn, addr):
 
             message = conn.recv(1024)
             filename = message.split()[1]
+            print("File : ", filename)
             f = open(filename[1:])
             outputdata = f.read()
 
+            print("Message Recieved")
+
+            HOST = "127.0.0.1"
+            #The .bind() method is used to associate the socket with a specific network interface and port number
+            print(addr[1])
+
+            print("Sending Header")
+
             # Send the HTTP response header line to the connection socket  
             Header = 'HTTP/1.1 200 OK\r\n\r\n'
-            conn.send(Header.encode('utf-8'))      
-            
-            # Send the content of the requested file to the client
-            conn.sendall(outputdata.encode('utf-8'))    
+            #send new Port Address
+            address = str(addr[1]+1)
+            print(address)
+            Header = address + ":"+Header
+            conn.send(Header.encode('utf-8')) 
+
+            conn.close()
+
+            conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            conn.bind((HOST, addr[1]+1))
+            conn.listen()
+            conn2, addr2 = conn.accept()  
+
+            try:
+                print('The server is ready to receive on new port')
+
+                # Send the content of the requested file to the client
+                conn2.sendall(outputdata.encode('utf-8'))    
+
+                # Close the connection socket with this particular client
+                conn2.close()
+            except IOError:
+                ErrorMessage = "HTTP/1.1 404 Not found\r\n\r\n"   
+                conn2.send(ErrorMessage.encode('utf-8'))   
+                conn2.close()      
                         
     except IOError:
                 # Send response message for file not found  
@@ -56,7 +86,8 @@ while True:
         # an incoming connection. When a client connects, it returns a new socket object representing 
         # the connection and a tuple holding the address of the client
         conn, addr = serverSocket.accept()
-        print("Client : ", addr)
+        Current_PORT += 1
+        print("Client : ", Current_PORT)
         new_thread = threading.Thread(target=HandleClientThread, args=(conn, addr))
         new_thread.start() 
         threads.append(new_thread)
